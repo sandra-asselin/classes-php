@@ -1,0 +1,215 @@
+
+<?php
+
+class user
+{
+
+	private $id;
+	public 	$login;
+	public 	$email;
+	public 	$firstname;
+	public 	$lastname;
+
+public function register($login, $password, $email, $firstname, $lastname)
+{
+
+	$bdd=mysqli_connect("localhost", "root", "", "classes");
+	$reqtab="SELECT *FROM user WHERE login='$login'";
+	$querytab=mysqli_query($bdd, $reqtab);
+	$num=mysqli_num_rows($querytab);
+
+		if($num == 0)
+		{ 
+			$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);	
+			$requser="INSERT INTO user VALUES(NULL, '$login', '$hash', '$email','$firstname','$lastname')";
+			$queryuser=mysqli_query($bdd, $requser);
+			return array($login, $password, $email, $firstname, $lastname);
+		}
+		else
+		{
+			return "login déjà existant";
+		}
+
+}
+
+public function connect($login, $password)
+{
+
+	$bdd=mysqli_connect("localhost", "root", "", "classes");
+	$query="SELECT *from user WHERE login='$login'";
+	$result= mysqli_query($bdd, $query);
+	$row = mysqli_fetch_array($result);
+		
+		if(password_verify($password,$row['password'])) 
+		{
+			$this->id=$row['id'];
+			$this->login=$login;
+			$this->email=$row['email'];
+			$this->firstname=$row['firstname'];
+			$this->lastname=$row['lastname'];
+		
+			$_SESSION['login']=$login;
+			$_SESSION['password']=$password;
+			return $_SESSION['login']. ", vous êtes bien connecté";
+
+			
+
+
+		}
+		else
+		{
+			return "Login ou mot de passe incorrect";	
+		}
+
+}
+
+public function disconnect()
+{
+	session_destroy();
+	return "Vous êtes bien déconnecté";
+}
+
+public function delete()
+{
+
+	if(isset($_SESSION['login']))
+	{
+		$login=$_SESSION['login'];
+		$bdd=mysqli_connect("localhost", "root", "", "classes");
+		$del="DELETE FROM user WHERE login='$login'";
+		mysqli_query($bdd, $del);
+		session_destroy();
+	}
+
+}
+
+public function update($login, $password, $email, $firstname,
+$lastname)
+{
+	if(isset($_SESSION['login']))
+	{
+		
+		$bdd=mysqli_connect("localhost", "root", "", "classes");
+		$log=$_SESSION['login'];
+		$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+		$update="UPDATE user SET login='$login', password='$hash', email='$email', firstname='$firstname', lastname='$lastname' WHERE login='$log'";
+		mysqli_query($bdd, $update);
+	}
+}
+
+public function isConnected()
+{
+	$connected=false;
+	if(isset($_SESSION['login']))
+	{
+		$connected=true;
+	}
+	else
+	{
+		$connected=false;
+	}
+
+	return($connected);
+
+}
+
+public function getAllInfos()
+{
+	if(isset($_SESSION['login']))
+	{
+        return($this);
+    }
+    else
+    {
+
+    	return "Aucun utilisateur n'est connecté";
+    }
+}
+
+public function getLogin()
+{
+	 return($this->login);
+}
+
+public function getEmail()
+{
+	 return($this->email);
+}
+
+public function getFirstname()
+{
+	 return($this->firstname);
+}
+
+public function getLastname()
+{
+	 return($this->lastname);
+}
+
+public function refresh()
+{
+	$bdd=mysqli_connect("localhost", "root", "", "classes");
+	$login=$_SESSION['login'];
+	$queryuser="SELECT *from user WHERE login='$login'";
+	$resultuser= mysqli_query($bdd, $queryuser);
+	$tabuser=mysqli_fetch_array($resultuser);
+
+	$this->id=$tabuser['id'];
+	$this->login=$tabuser['login'];
+	$this->email=$tabuser['email'];
+	$this->firstname=$tabuser['firstname'];
+	$this->lastname=$tabuser['lastname'];
+}
+}
+
+
+
+session_start();
+
+
+$user = new user;
+
+// var_dump() $user->register('test7','azerty','sandra@test.com','sass', 'ass'));
+// echo '<br>';
+
+
+
+echo $user->connect('test9', 'azerty');
+echo '<br>';
+
+
+
+
+// echo $user->disconnect();
+// echo '<br>';
+
+// echo $user->delete();
+// echo '<br>';
+
+echo $user->update('test9','azerty','sandra@test.com','sass', 'ass');
+echo '<br>';
+
+// echo $user->isConnected();
+// echo '<br>';
+
+
+$info=$user->getAllInfos();
+var_dump($info);
+echo '<br>';
+
+// echo $user->getLogin();
+// echo '<br>';
+
+// echo $user->getEmail();
+// echo '<br>';
+
+// echo $user->getFirstname();
+// echo '<br>';
+
+// echo $user->getLastname();
+// echo '<br>';
+
+echo $user->refresh();
+echo '<br>';
+
+
